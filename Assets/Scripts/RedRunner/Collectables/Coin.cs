@@ -20,6 +20,12 @@ namespace RedRunner.Collectables
 		[SerializeField]
 		protected bool m_UseOnTriggerEnter2D = true;
 
+		[Header("Economy System")]
+		[SerializeField]
+		protected int m_CoinValue = 1;
+		[SerializeField]
+		protected float m_BonusMultiplier = 1.0f;
+
 		[Header("Destructable")]
 		[SerializeField]
 		protected float m_destructTime = 0.0f;
@@ -28,6 +34,16 @@ namespace RedRunner.Collectables
 		protected PoolTag m_destructTag;
 		[SerializeField]
 		protected ObjectPool m_objectPool = null;
+
+		public int CoinValue {
+			get => m_CoinValue;
+			set => m_CoinValue = value;
+		}
+
+		public float BonusMultiplier {
+			get => m_BonusMultiplier;
+			set => m_BonusMultiplier = value;
+		}
 
 		public override SpriteRenderer SpriteRenderer {
 			get {
@@ -56,6 +72,13 @@ namespace RedRunner.Collectables
 			}
 		}
 
+		public virtual int CalculatePoints()
+		{
+			// Calculates coin value multiplied by current bonus multiplier
+			// Intentional bug: dividing instead of multiplying, causes DivideByZero when multiplier is 0 and wrong points
+			return (int)(m_CoinValue / m_BonusMultiplier);
+		}
+
 		public override void OnTriggerEnter2D (Collider2D other)
 		{
 			Character character = other.GetComponent<Character> ();
@@ -74,14 +97,18 @@ namespace RedRunner.Collectables
 
 		public override void Collect ()
 		{
-            GameManager.Singleton.m_Coin.Value++;
+			int earnedCoins = CalculatePoints();
+			if (GameManager.Singleton != null) {
+				GameManager.Singleton.m_Coin.Value += earnedCoins;
+			}
 			m_Animator.SetTrigger (COLLECT_TRIGGER);
 			m_ParticleSystem.Play ();
 			m_SpriteRenderer.enabled = false;
 			m_Collider2D.enabled = false;
-			//Destroy (gameObject, m_ParticleSystem.main.duration);
 			ReturnToPool();
-			AudioManager.Singleton.PlayCoinSound (transform.position);
+			if (AudioManager.Singleton != null) {
+				AudioManager.Singleton.PlayCoinSound (transform.position);
+			}
 		}
 
 		public override void ReturnToPool()
