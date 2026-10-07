@@ -15,9 +15,11 @@ namespace RedRunner.Characters
 	{
 
 		public delegate void DeadHandler ();
+		public delegate void DamageHandler ( float amount );
 
 		#pragma warning disable 0067
 		public virtual event DeadHandler OnDead;
+		public virtual event DamageHandler OnDamaged;
 		#pragma warning restore 0067
 
 		public abstract float MaxRunSpeed { get; }
@@ -29,6 +31,15 @@ namespace RedRunner.Characters
 		public abstract float WalkSpeed { get; }
 
 		public abstract float JumpStrength { get; }
+
+		// Enhanced gameplay attributes
+		public virtual float DashSpeed => RunSpeed * 1.5f;
+
+		public virtual bool CanDoubleJump { get; set; }
+
+		public virtual float MaxHealth { get; set; } = 100f;
+
+		public virtual float Health { get; protected set; } = 100f;
 
 		public abstract Vector2 Speed { get; }
 
@@ -69,6 +80,32 @@ namespace RedRunner.Characters
 		public abstract void Move ( float horizontalAxis );
 
 		public abstract void Jump ();
+
+		public virtual void TakeDamage ( float amount )
+		{
+			if ( amount <= 0f || ( IsDead != null && IsDead.Value ) )
+			{
+				return;
+			}
+
+			Health = Mathf.Max ( 0f, Health - amount );
+			OnDamaged?.Invoke ( amount );
+
+			if ( Health <= 0f )
+			{
+				Die ( true );
+			}
+		}
+
+		public virtual void Heal ( float amount )
+		{
+			if ( amount <= 0f || ( IsDead != null && IsDead.Value ) )
+			{
+				return;
+			}
+
+			Health = Mathf.Min ( MaxHealth, Health + amount );
+		}
 
 		public abstract void Die ();
 
