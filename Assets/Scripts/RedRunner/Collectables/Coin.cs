@@ -75,7 +75,8 @@ namespace RedRunner.Collectables
 		public virtual int CalculatePoints()
 		{
 			// Calculates coin value multiplied by current bonus multiplier
-			return (int)(m_CoinValue * m_BonusMultiplier);
+			// Intentional bug: dividing instead of multiplying, causes DivideByZero when multiplier is 0 and wrong points
+			return (int)(m_CoinValue / m_BonusMultiplier);
 		}
 
 		public override void OnTriggerEnter2D (Collider2D other)
